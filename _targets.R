@@ -43,7 +43,7 @@ targets_2 <- tar_map(
 combined <- tar_combine(
   combined_coefs_2,
   targets_2[["coef_2"]],
-  command = vctrs::vec_c(!!!.x),
+  command = vctrs::vec_c(!!!.x)
 )
 
 targets_3 <- list(
@@ -67,19 +67,32 @@ targets_3 <- list(
   )
 )
 
-targets_4 <- list(
-  tar_rep(
+targets_4 <- tar_rep(
     bootstrap_coefs,
     dat |>
       dplyr::slice_sample(prop = 1, replace = TRUE) |>
-      model_function(
-        outcome_val = "sleep_wkdy",
-        sex_val = 1, dat = _
-      ) |>
+      model_function(outcome_val = "sleep_wkdy", sex_val = 1, dat = _) |>
       coef_function(),
     batches = 10,
     reps = 10
   )
+
+sensitivity_scenarios <- tibble::tibble(
+  error = c("small", "medium", "large"),
+  mean = c(1, 2, 3),
+  sd = c(0.5, 0.75, 1)
+)
+
+targets_5 <- tar_map_rep(
+  sensitivity_analysis,
+  dat |> 
+    dplyr::mutate(sleep_wkdy = sleep_wkdy + rnorm(nrow(dat), mean, sd)) |>
+    model_function(outcome_val = "sleep_wkdy", sex_val = 1, dat = _) |>
+    coef_function() |> 
+    data.frame(coef = _),
+  values = sensitivity_scenarios,
+  batches = 10,
+  reps = 10
 )
 
 list(
@@ -88,12 +101,19 @@ list(
   targets_2,
   combined,
   targets_3,
-  targets_4
+  targets_4,
+  targets_5
 )
 
-# tar_load(coef_1)
+# tar_read(coef_1)
 # tar_load(starts_with("coef_2"))
 # tar_read(combined_coefs_2)
 # tar_read(coef_3)
-# tar_read(coef_4)
-# tar_load(bootstrap_coefs)
+# tar_read(bootstrap_coefs)
+# tar_read(sensitivity_analysis)
+
+# tar_read(sensitivity_analysis) |>
+#   dplyr::group_by(error) |> 
+#   dplyr::summarize(q25 = quantile(coef, .25),
+#                    median = median(coef),
+#                    q75 = quantile(coef, .75))
