@@ -17,7 +17,7 @@ targets_setup <- list(
 targets_1 <- list(
   tar_target(
     model_1,
-    model_function(outcome_val = "sleep_wkdy", sex_val = 1, dat = dat)
+    model_function(outcome_var = "sleep_wkdy", sex_val = 1, dat = dat)
   ),
   tar_target(
     coef_1,
@@ -32,7 +32,7 @@ targets_2 <- tar_map(
   ),
   tar_target(
     model_2,
-    model_function(outcome_val = outcome, sex_val = sex, dat = dat)
+    model_function(outcome_var = outcome, sex_val = sex, dat = dat)
   ),
   tar_target(
     coef_2,
@@ -57,7 +57,7 @@ targets_3 <- list(
   ),
   tar_target(
     model_3,
-    model_function(outcome_val = outcome_target, sex_val = sex_target, dat = dat),
+    model_function(outcome_var = outcome_target, sex_val = sex_target, dat = dat),
     pattern = cross(outcome_target, sex_target)
   ),
   tar_target(
@@ -71,7 +71,7 @@ targets_4 <- tar_rep(
     bootstrap_coefs,
     dat |>
       dplyr::slice_sample(prop = 1, replace = TRUE) |>
-      model_function(outcome_val = "sleep_wkdy", sex_val = 1, dat = _) |>
+      model_function(outcome_var = "sleep_wkdy", sex_val = 1, dat = _) |>
       coef_function(),
     batches = 10,
     reps = 10
@@ -87,7 +87,7 @@ targets_5 <- tar_map_rep(
   sensitivity_analysis,
   dat |> 
     dplyr::mutate(sleep_wkdy = sleep_wkdy + rnorm(nrow(dat), mean, sd)) |>
-    model_function(outcome_val = "sleep_wkdy", sex_val = 1, dat = _) |>
+    model_function(outcome_var = "sleep_wkdy", sex_val = 1, dat = _) |>
     coef_function() |> 
     data.frame(coef = _),
   values = sensitivity_scenarios,
